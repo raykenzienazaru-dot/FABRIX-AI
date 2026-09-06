@@ -42,7 +42,7 @@ export default function LandingPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-deep text-white">
+      <section id="home" className="relative overflow-hidden bg-deep text-white">
         <div className="absolute inset-0 bg-weave opacity-50" />
         <div className="relative mx-auto grid max-w-6xl gap-14 px-5 py-20 sm:px-6 md:grid-cols-[1.05fr,0.95fr] md:items-center md:py-28">
           <div>
@@ -81,16 +81,16 @@ export default function LandingPage() {
               className="mt-8 flex flex-col gap-3 sm:flex-row"
             >
               <Link
-                href="/register"
+                href="/#dampak"
                 className="inline-flex min-h-12 items-center justify-center border-[3px] border-white bg-white px-6 text-sm font-black text-deep shadow-[4px_4px_0_0_theme(colors.sage)] transition active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
               >
-                Mulai Gratis
+                Mulai Sekarang
               </Link>
               <Link
                 href="/#cara-kerja"
                 className="inline-flex min-h-12 items-center justify-center border-[3px] border-white/40 px-6 text-sm font-black text-white transition hover:border-sage hover:bg-white/5"
               >
-                Lihat Cara Kerjanya
+                Jelajahi
               </Link>
             </motion.div>
             <motion.p

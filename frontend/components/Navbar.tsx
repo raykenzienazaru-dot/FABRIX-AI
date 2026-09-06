@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 import BrandLogo from "./BrandLogo";
 
 const navigationLinks = [
-  { href: "/#produk", label: "Produk" },
+  { href: "/#home", label: "Beranda" },
   { href: "/#cara-kerja", label: "Cara Kerja" },
   { href: "/#fitur", label: "Fitur" },
   { href: "/#dampak", label: "Dampak" },

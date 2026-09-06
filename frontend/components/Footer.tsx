@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const quickLinks = [
-  { href: "/#produk", label: "Produk" },
+  { href: "/#home", label: "Beranda" },
   { href: "/#cara-kerja", label: "Cara Kerja" },
   { href: "/#dampak", label: "Dampak" },
   { href: "/register", label: "Mulai Gratis" },
