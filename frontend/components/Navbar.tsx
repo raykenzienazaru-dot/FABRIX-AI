@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 import BrandLogo from "./BrandLogo";
 
 const navigationLinks = [
@@ -14,6 +15,24 @@ const navigationLinks = [
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = belum tau (masih cek)
+
+  useEffect(() => {
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setIsLoggedIn(Boolean(data.session));
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) setIsLoggedIn(Boolean(session));
+    });
+
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 border-b-[3px] border-deep bg-primary text-white">
@@ -31,15 +50,26 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link href="/login" className="px-2 py-2 text-sm font-bold text-white/85 transition-colors hover:text-white">
-            Masuk
-          </Link>
-          <Link
-            href="/register"
-            className="border-[3px] border-deep bg-white px-4 py-2 text-sm font-black text-deep shadow-[3px_3px_0_0_theme(colors.deep)] transition hover:-translate-y-0.5 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-          >
-            Mulai Sekarang
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/dashboard"
+              className="border-[3px] border-deep bg-white px-4 py-2 text-sm font-black text-deep shadow-[3px_3px_0_0_theme(colors.deep)] transition hover:-translate-y-0.5 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+            >
+              Buka Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="px-2 py-2 text-sm font-bold text-white/85 transition-colors hover:text-white">
+                Masuk
+              </Link>
+              <Link
+                href="/register"
+                className="border-[3px] border-deep bg-white px-4 py-2 text-sm font-black text-deep shadow-[3px_3px_0_0_theme(colors.deep)] transition hover:-translate-y-0.5 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              >
+                Mulai Sekarang
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -99,21 +129,33 @@ export default function Navbar() {
                   </Link>
                 ))}
               </nav>
-              <div className="grid grid-cols-2 gap-3 border-t-[3px] border-white/20 pt-4">
-                <Link
-                  href="/login"
-                  onClick={() => setMenuOpen(false)}
-                  className="inline-flex min-h-10 items-center justify-center border-[3px] border-white/40 px-4 text-sm font-black text-white transition hover:border-white hover:bg-white/10"
-                >
-                  Masuk
-                </Link>
-                <Link
-                  href="/register"
-                  onClick={() => setMenuOpen(false)}
-                  className="inline-flex min-h-10 items-center justify-center border-[3px] border-deep bg-white px-4 text-sm font-black text-deep shadow-[3px_3px_0_0_theme(colors.deep)]"
-                >
-                  Mulai Sekarang
-                </Link>
+              <div className="border-t-[3px] border-white/20 pt-4">
+                {isLoggedIn ? (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMenuOpen(false)}
+                    className="inline-flex min-h-10 w-full items-center justify-center border-[3px] border-deep bg-white px-4 text-sm font-black text-deep shadow-[3px_3px_0_0_theme(colors.deep)]"
+                  >
+                    Buka Dashboard
+                  </Link>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <Link
+                      href="/login"
+                      onClick={() => setMenuOpen(false)}
+                      className="inline-flex min-h-10 items-center justify-center border-[3px] border-white/40 px-4 text-sm font-black text-white transition hover:border-white hover:bg-white/10"
+                    >
+                      Masuk
+                    </Link>
+                    <Link
+                      href="/register"
+                      onClick={() => setMenuOpen(false)}
+                      className="inline-flex min-h-10 items-center justify-center border-[3px] border-deep bg-white px-4 text-sm font-black text-deep shadow-[3px_3px_0_0_theme(colors.deep)]"
+                    >
+                      Mulai Sekarang
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
