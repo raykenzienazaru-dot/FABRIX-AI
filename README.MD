@@ -9,8 +9,8 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.3.4-051F20?style=for-the-badge&logo=next.js&logoColor=white)](frontend/package.json)
 [![Status](https://img.shields.io/badge/Status-Prototipe_Integrasi-8EB69B?style=for-the-badge)](#status-implementasi--batasan)
 
-**Submission for ITECHNO CUP 2026 — Web Development**
-**By Tim SATORU**
+**Submission for Web Development ITECHNO CUP 2026**
+**By Tim SATORU (Smkn sAtu Technologycal Organization for Reasearch and Upgrades)**
 
 [Live Demo](https://fabrixai.vercel.app/) · [Google Drive](https://drive.google.com/drive/folders/13XIek5RmP-ADojPY14Cdhyjwmx3TGCpd) · [Contoh Laporan PDF](UI%20Gambar/FABRIX_AI_Kain_tanpa_nama_f3c299d4.pdf)
 
@@ -392,6 +392,6 @@ Proyek ini dilisensikan di bawah [MIT License](LICENSE) — hak cipta 2026, Tim 
 
 <div align="center">
 
-**FABRIX AI — Foto. Deteksi. Panduan. Dokumentasikan.**
+**FABRIX AI by SATORU | Foto. Deteksi. Panduan. Dokumentasikan.**
 
 </div>
