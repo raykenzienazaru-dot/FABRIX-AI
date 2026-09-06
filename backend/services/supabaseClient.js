@@ -6,9 +6,6 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       "Isi file .env terlebih dahulu (lihat .env.example)."
   );
 }
-
-// Backend menggunakan service_role key karena ia bertindak sebagai trusted server,
-// yang melakukan validasi & business logic sebelum menyentuh database (bukan RLS bypass sembarangan).
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,

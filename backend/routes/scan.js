@@ -1,6 +1,5 @@
 const express = require("express");
 const multer = require("multer");
-const fetch = require("node-fetch");
 const { randomUUID } = require("node:crypto");
 const { requireAuth } = require("../middleware/authMiddleware");
 const { supabaseAdmin } = require("../services/supabaseClient");
@@ -22,41 +21,6 @@ const upload = multer({
 
 const STORAGE_BUCKET = "fabric-images";
 
-// URL microservice Python (ai_service.py) yang cuma handle XGBoost inference
-const AI_SERVICE_URL = (process.env.AI_SERVICE_URL || "").trim().replace(/\/+$/, "");
-
-/**
- * Panggil AI microservice (XGBoost) untuk prediksi kategori kualitas
- * berdasarkan jumlah defect hasil deteksi YOLO.
- * Fail-safe: kalau service ini down/belum di-set, jangan gagalkan seluruh scan --
- * cukup return null dan tetap lanjutkan proses dengan hasil YOLO saja.
- */
-async function getQualityPrediction(jumlahDefect) {
-  if (!AI_SERVICE_URL) {
-    console.warn("[scan] AI_SERVICE_URL belum diset, skip prediksi kualitas");
-    return null;
-  }
-
-  try {
-    const response = await fetch(`${AI_SERVICE_URL}/predict-quality`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jumlah_defect: jumlahDefect }),
-      timeout: 10000,
-    });
-
-    if (!response.ok) {
-      console.error("[scan] AI service responded with error:", response.status);
-      return null;
-    }
-
-    return await response.json();
-  } catch (err) {
-    console.error("[scan] Failed to call AI service:", err.message);
-    return null;
-  }
-}
-
 // POST /api/scan  (multipart/form-data: image, composition, structure, washing_condition, fabric_name)
 router.post("/", requireAuth, upload.single("image"), async (req, res) => {
   let storedFilePath = null;
@@ -73,7 +37,7 @@ router.post("/", requireAuth, upload.single("image"), async (req, res) => {
       washing_condition: safeJson(washing_condition),
     };
 
-    // 1. Upload gambar ke Supabase Storage
+    // 1. Upload the captured/uploaded image to Supabase Storage
     const filePath = `${req.user.id}/${randomUUID()}-${sanitizeFilename(
       req.file.originalname || "capture.jpg"
     )}`;
@@ -95,14 +59,10 @@ router.post("/", requireAuth, upload.single("image"), async (req, res) => {
       .from(STORAGE_BUCKET)
       .getPublicUrl(filePath);
 
-    // 2. Deteksi defect via Roboflow (langsung, tanpa perantara)
+    // 2. Run object-detection inference through the configured Roboflow Workflow.
     const inferenceResult = await runInference(req.file.buffer, fabricData);
-    const jumlahDefect = (inferenceResult.detections || []).length;
 
-    // 3. Prediksi kualitas via AI microservice (XGBoost) -- opsional, fail-safe
-    const qualityPrediction = await getQualityPrediction(jumlahDefect);
-
-    // 4. Simpan hasil analisis
+    // 3. Persist the analysis result
     const { data: analysis, error: insertError } = await supabaseAdmin
       .from("fabric_analyses")
       .insert({
@@ -114,9 +74,10 @@ router.post("/", requireAuth, upload.single("image"), async (req, res) => {
         structure: fabricData.structure,
         washing_condition: fabricData.washing_condition,
         detections: inferenceResult.detections || null,
-        jumlah_defect: jumlahDefect,
-        predicted_quality: qualityPrediction?.predicted_quality || null,
-        prediction_confidence: qualityPrediction?.confidence || null,
+        microplastic_shedding_index:
+          inferenceResult.prediction?.microplastic_shedding_index ?? null,
+        fabric_durability_index:
+          inferenceResult.prediction?.fabric_durability_index ?? null,
         recommendation: inferenceResult.recommendation || null,
         raw_result: inferenceResult,
         result_source: inferenceResult.source || "unknown",
@@ -140,6 +101,7 @@ router.post("/", requireAuth, upload.single("image"), async (req, res) => {
   }
 });
 
+// GET /api/scan/history
 router.get("/history", requireAuth, async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from("fabric_analyses")
@@ -151,63 +113,7 @@ router.get("/history", requireAuth, async (req, res) => {
   return res.json({ analyses: data });
 });
 
-
-router.get("/insights/trend", requireAuth, async (req, res) => {
-  const MIN_SCAN_FOR_TREND = 3;
-
-  const { data: rows, error } = await supabaseAdmin
-    .from("fabric_analyses")
-    .select("jumlah_defect, detections, created_at")
-    .eq("user_id", req.user.id)
-    .order("created_at", { ascending: true });
-
-  if (error) return res.status(500).json({ error: error.message });
-
-  if (!rows || rows.length < MIN_SCAN_FOR_TREND) {
-    return res.json({
-      jumlah_scan: rows?.length || 0,
-      trend: null,
-      insight_text: `Belum cukup data. Minimal ${MIN_SCAN_FOR_TREND} scan diperlukan (saat ini baru ${rows?.length || 0}).`,
-    });
-  }
-
-  const defectList = rows.map((r) => r.jumlah_defect ?? 0);
-  const midpoint = Math.floor(defectList.length / 2);
-  const avgAwal = average(defectList.slice(0, midpoint));
-  const avgAkhir = average(defectList.slice(midpoint));
-
-  const selisih = avgAkhir - avgAwal;
-  let trend, insightText;
-  if (selisih > 1) {
-    trend = "menurun";
-    insightText = `Kualitas kain yang kamu scan cenderung menurun -- rata-rata jumlah defect naik dari ${avgAwal.toFixed(1)} ke ${avgAkhir.toFixed(1)} per scan.`;
-  } else if (selisih < -1) {
-    trend = "membaik";
-    insightText = `Kualitas kain yang kamu scan cenderung membaik -- rata-rata jumlah defect turun dari ${avgAwal.toFixed(1)} ke ${avgAkhir.toFixed(1)} per scan.`;
-  } else {
-    trend = "stabil";
-    insightText = `Kualitas kain yang kamu scan relatif stabil dalam ${rows.length} scan terakhir.`;
-  }
-
-  const allDefects = {};
-  rows.forEach((r) => {
-    (r.detections || []).forEach((d) => {
-      allDefects[d.class] = (allDefects[d.class] || 0) + 1;
-    });
-  });
-  const jenisPalingSering = Object.keys(allDefects).length
-    ? Object.entries(allDefects).sort((a, b) => b[1] - a[1])[0][0]
-    : null;
-
-  return res.json({
-    jumlah_scan: rows.length,
-    trend,
-    insight_text: insightText,
-    jenis_defect_paling_sering: jenisPalingSering,
-    breakdown_semua_jenis: allDefects,
-  });
-});
-
+// GET /api/scan/:id
 router.get("/:id", requireAuth, async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from("fabric_analyses")
@@ -221,6 +127,7 @@ router.get("/:id", requireAuth, async (req, res) => {
   return res.json({ analysis: data });
 });
 
+// POST /api/scan/compare  { ids: [uuid, ...] }  (2-3 items)
 router.post("/compare", requireAuth, async (req, res) => {
   const ids = Array.isArray(req.body.ids) ? [...new Set(req.body.ids)] : [];
   if (ids.length < 2 || ids.length > 3) {
@@ -237,6 +144,8 @@ router.post("/compare", requireAuth, async (req, res) => {
   return res.json({ comparison: data });
 });
 
+// PATCH /api/scan/:id  { fabric_name }
+// The analysis is persisted during scanning; this endpoint lets the user name it afterwards.
 router.patch("/:id", requireAuth, async (req, res) => {
   const fabricName = typeof req.body.fabric_name === "string"
     ? req.body.fabric_name.trim()
@@ -258,6 +167,9 @@ router.patch("/:id", requireAuth, async (req, res) => {
   if (!data) return res.status(404).json({ error: "Analysis not found" });
   return res.json({ analysis: data });
 });
+
+// POST /api/scan/:id/whatif  { composition, structure, washing_condition }
+// Re-runs inference against the ORIGINAL stored image with modified structured data.
 router.post("/:id/whatif", requireAuth, async (req, res) => {
   const { data: original, error: fetchError } = await supabaseAdmin
     .from("fabric_analyses")
@@ -284,8 +196,6 @@ router.post("/:id/whatif", requireAuth, async (req, res) => {
     };
 
     const inferenceResult = await runInference(buffer, fabricData);
-    const jumlahDefect = (inferenceResult.detections || []).length;
-    const qualityPrediction = await getQualityPrediction(jumlahDefect);
 
     const { data: scenario, error: insertError } = await supabaseAdmin
       .from("fabric_analyses")
@@ -298,9 +208,10 @@ router.post("/:id/whatif", requireAuth, async (req, res) => {
         structure: fabricData.structure,
         washing_condition: fabricData.washing_condition,
         detections: inferenceResult.detections || null,
-        jumlah_defect: jumlahDefect,
-        predicted_quality: qualityPrediction?.predicted_quality || null,
-        prediction_confidence: qualityPrediction?.confidence || null,
+        microplastic_shedding_index:
+          inferenceResult.prediction?.microplastic_shedding_index ?? null,
+        fabric_durability_index:
+          inferenceResult.prediction?.fabric_durability_index ?? null,
         recommendation: inferenceResult.recommendation || null,
         raw_result: inferenceResult,
         result_source: inferenceResult.source || "unknown",
@@ -329,11 +240,6 @@ function safeJson(value) {
 
 function sanitizeFilename(name) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
-
-function average(arr) {
-  if (!arr.length) return 0;
-  return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
 module.exports = router;

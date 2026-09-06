@@ -1,68 +1,11 @@
 const fetch = require("node-fetch");
 
-/**
- * ---------------------------------------------------------------------------
- * Roboflow Workflow integration
- * ---------------------------------------------------------------------------
- * This service calls a published Roboflow Workflow. The endpoint is built
- * from three env vars (matching how Roboflow presents them in its "Deploy"
- * screen):
- *
- *   ROBOFLOW_API_BASE   e.g. https://detect.roboflow.com
- *   ROBOFLOW_WORKSPACE  e.g. evelly-khanza
- *   ROBOFLOW_WORKFLOW_ID e.g. fabric-defect-detection_2025-tw6ok-ll8oy
- *
- * These are combined into:
- *   POST {ROBOFLOW_API_BASE}/infer/workflows/{ROBOFLOW_WORKSPACE}/{ROBOFLOW_WORKFLOW_ID}
- *   body: { "api_key": "...", "inputs": { "image": { "type": "base64", "value": "..." } } }
- *
- * (A single pre-built ROBOFLOW_WORKFLOW_URL env var is also still supported,
- * for backward compatibility / overriding the above.)
- *
- * Returns:
- *   {
- *     "outputs": [
- *       {
- *         "predictions": {
- *           "image": { "width": <int>, "height": <int> },
- *           "predictions": [
- *             {
- *               "x": <number>, "y": <number>,
- *               "width": <number>, "height": <number>,
- *               "confidence": <number 0-1>,
- *               "class": "<defect_class>",
- *               "class_id": <int>,
- *               "detection_id": "<uuid>"
- *             }
- *           ]
- *         }
- *       }
- *     ]
- *   }
- * ---------------------------------------------------------------------------
- */
-
-const ROBOFLOW_API_BASE = (process.env.ROBOFLOW_API_BASE || "").trim().replace(/\/+$/, "");
-const ROBOFLOW_WORKSPACE = (process.env.ROBOFLOW_WORKSPACE || "").trim();
-const ROBOFLOW_WORKFLOW_ID = (process.env.ROBOFLOW_WORKFLOW_ID || "").trim();
-
-// Preferred: build the URL from the three discrete vars above.
-// Fallback: allow a fully-formed ROBOFLOW_WORKFLOW_URL to override/substitute.
-const ROBOFLOW_WORKFLOW_URL = (
-  process.env.ROBOFLOW_WORKFLOW_URL ||
-  (ROBOFLOW_API_BASE && ROBOFLOW_WORKSPACE && ROBOFLOW_WORKFLOW_ID
-    ? `${ROBOFLOW_API_BASE}/infer/workflows/${ROBOFLOW_WORKSPACE}/${ROBOFLOW_WORKFLOW_ID}`
-    : "")
-)
-  .trim()
-  .replace(/\/+$/, "");
-
+const ROBOFLOW_WORKFLOW_URL = (process.env.ROBOFLOW_WORKFLOW_URL || "").trim().replace(/\/+$/, "");
 const ROBOFLOW_API_KEY = process.env.ROBOFLOW_API_KEY;
 
 const ALLOW_MOCK_INFERENCE =
   (process.env.ALLOW_MOCK_INFERENCE || "true").toLowerCase() === "true";
 
-// Used only by the local mock fallback (dev/demo without a live Roboflow key).
 const FABRIC_CLASSES = [
   "hole",
   "stain",
@@ -72,8 +15,6 @@ const FABRIC_CLASSES = [
   "discoloration",
 ];
 
-// Rough, editable severity weights used to translate detected defect
-// classes + confidence into the two indices the rest of the app displays.
 const DEFECT_SEVERITY = {
   hole: 0.9,
   tear: 0.85,
@@ -209,15 +150,9 @@ function buildRecommendation(detections) {
  */
 async function runInference(imageBuffer, fabricData = {}) {
   if (!ROBOFLOW_WORKFLOW_URL || !ROBOFLOW_API_KEY) {
-    console.error(
-      "[yoloService] Roboflow not configured. Check ROBOFLOW_API_BASE / ROBOFLOW_WORKSPACE / ROBOFLOW_WORKFLOW_ID (or ROBOFLOW_WORKFLOW_URL) and ROBOFLOW_API_KEY."
-    );
     if (ALLOW_MOCK_INFERENCE) return mockInference(imageBuffer);
     throw new Error("Roboflow workflow URL or API key is not configured");
   }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
 
   try {
     const base64Image = imageBuffer.toString("base64");
@@ -231,7 +166,7 @@ async function runInference(imageBuffer, fabricData = {}) {
           image: { type: "base64", value: base64Image },
         },
       }),
-      signal: controller.signal,
+      timeout: 20000,
     });
 
     if (!response.ok) {
@@ -276,15 +211,12 @@ async function runInference(imageBuffer, fabricData = {}) {
       fabric_data: fabricData,
     };
   } catch (err) {
-    const reason = err.name === "AbortError" ? "request timed out after 20s" : err.message;
-    console.error("[yoloService] Roboflow workflow call failed:", reason);
+    console.error("[yoloService] Roboflow workflow call failed:", err.message);
     if (ALLOW_MOCK_INFERENCE) {
       console.warn("[yoloService] Falling back to mock inference.");
       return mockInference(imageBuffer);
     }
     throw err;
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
 
