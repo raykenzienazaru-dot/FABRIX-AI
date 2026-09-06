@@ -1,10 +1,23 @@
+<div align="center">
+
 # FABRIX AI
 
-### Deteksi cacat kain sebelum dipotong.
+### Pahami kain sebelum diproduksi.
 
-**Submission ITECHNO CUP 2026 — Web Development · Tim SATORU**
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/raykenzienazaru-dot/FABRIX-AI)
+[![Lisensi](https://img.shields.io/badge/Lisensi-MIT-235347?style=for-the-badge)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16.3.4-051F20?style=for-the-badge&logo=next.js&logoColor=white)](frontend/package.json)
+[![Status](https://img.shields.io/badge/Status-Prototipe_Integrasi-8EB69B?style=for-the-badge)](#status-implementasi-dan-batasan)
 
-[Website / Live Demo](https://fabrixai.vercel.app/) · [Google Drive](https://drive.google.com/drive/folders/13XIek5RmP-ADojPY14Cdhyjwmx3TGCpd) · [Repository](https://github.com/raykenzienazaru-dot/FABRIX-AI) · [Lisensi MIT](LICENSE)
+**Submission for ITECHNO CUP 2026 — Web Development**
+
+**Tim SATORU**
+
+[Website / Live Demo](https://fabrixai.vercel.app/) · [Google Drive](https://drive.google.com/drive/folders/13XIek5RmP-ADojPY14Cdhyjwmx3TGCpd)
+
+</div>
+
+---
 
 FABRIX AI membantu UMKM, konveksi, dan pelaku tekstil memeriksa foto kain sebelum pemotongan. Pengguna dapat mengambil foto atau memilih gambar dari galeri, melihat lokasi cacat, membaca prediksi kualitas, mencari area potong yang menghindari deteksi cacat, serta menyimpan dan mengunduh hasil pemeriksaan.
 
