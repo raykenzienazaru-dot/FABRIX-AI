@@ -13,7 +13,7 @@
 
 **Tim SATORU**
 
-[Website / Live Demo](https://fabrixai.vercel.app/) · [Google Drive](https://drive.google.com/drive/folders/13XIek5RmP-ADojPY14Cdhyjwmx3TGCpd)
+[Website / Live ](https://fabrixai.vercel.app/) · [Google Drive](https://drive.google.com/drive/folders/13XIek5RmP-ADojPY14Cdhyjwmx3TGCpd)
 
 </div>
 
