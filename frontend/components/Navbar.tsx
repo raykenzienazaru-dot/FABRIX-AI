@@ -9,7 +9,8 @@ import BrandLogo from "./BrandLogo";
 
 const navigationLinks = [
   { href: "/#produk", label: "Produk" },
-  { href: "/#teknologi", label: "Teknologi" },
+  { href: "/#cara-kerja", label: "Cara Kerja" },
+  { href: "/#fitur", label: "Fitur" },
   { href: "/#dampak", label: "Dampak" },
 ];
 
@@ -59,11 +60,8 @@ export default function Navbar() {
             </Link>
           ) : (
             <>
-              <Link href="/login" className="px-2 py-2 text-sm font-bold text-white/85 transition-colors hover:text-white">
-                Masuk
-              </Link>
               <Link
-                href="/register"
+                href="/#dampak"
                 className="border-[3px] border-deep bg-white px-4 py-2 text-sm font-black text-deep shadow-[3px_3px_0_0_theme(colors.deep)] transition hover:-translate-y-0.5 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Mulai Sekarang
