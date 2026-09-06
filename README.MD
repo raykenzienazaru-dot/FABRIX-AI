@@ -11,7 +11,6 @@
 
 **Submission for Web Development ITECHNO CUP 2026**
 **By Tim SATORU**
-**(Smkn sAtu Technologycal Organization for Reasearch and Upgrades)**
 
 [Live Demo](https://fabrixai.vercel.app/) · [Google Drive](https://drive.google.com/drive/folders/13XIek5RmP-ADojPY14Cdhyjwmx3TGCpd) · [Contoh Laporan PDF](UI%20Gambar/FABRIX_AI_Kain_tanpa_nama_f3c299d4.pdf)
 
