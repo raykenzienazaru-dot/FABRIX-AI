@@ -74,9 +74,6 @@ const FABRIC_CLASSES = [
 
 // Rough, editable severity weights used to translate detected defect
 // classes + confidence into the two indices the rest of the app displays.
-// The Roboflow model only returns bounding-box detections; it does NOT
-// natively output shedding/durability scores, so these are a transparent,
-// deterministic heuristic derived from what was detected.
 const DEFECT_SEVERITY = {
   hole: 0.9,
   tear: 0.85,
@@ -103,7 +100,6 @@ function humanizeClass(cls) {
 function buildWorkflowUrl() {
   return ROBOFLOW_WORKFLOW_URL;
 }
-
 
 function mockInference(imageBuffer) {
   const seed = imageBuffer ? imageBuffer.length : Math.floor(Math.random() * 999999);
