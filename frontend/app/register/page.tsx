@@ -77,7 +77,8 @@ export default function RegisterPage() {
             Buat ruang kerja untuk menyimpan pemeriksaan, melihat riwayat, membandingkan kain, dan mengunduh laporan.
           </p>
           <div className="mt-9 grid gap-3 text-sm text-white/75">
-            {["Analisis langsung dari kamera", "Riwayat pemeriksaan milikmu", "Laporan siap diunduh"].map((item) => (
+          {["Langkah - Langkah membuat akun:"]}
+            {["Isi biodata sesuai form yang tertera", "Klik buat akun", "Chek GMAIL untuk konfirmasi email (Supabase Auth)"].map((item) => (
               <p key={item} className="flex items-center gap-3">
                 <span className="h-2 w-2 rounded-full bg-sage" />
                 {item}
