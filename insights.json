@@ -1,0 +1,16 @@
+{
+  "model_info": {
+    "dataset_source": "Industrial Fabric Quality Inspection Dataset (Kaggle)",
+    "total_data": 25750,
+    "accuracy": 0.0,
+    "last_trained": "2026-09-04"
+  },
+  "feature_importance": [
+    {"feature": "defect_count", "importance": 0.0, "label": "Jumlah Defect"},
+    {"feature": "gsm", "importance": 0.0, "label": "GSM (Berat Kain)"},
+    {"feature": "tensile_strength", "importance": 0.0, "label": "Kekuatan Tarik"}
+  ],
+  "insight_text": [
+    "GANTI dengan insight hasil analisis feature_importance dari notebook kalian."
+  ]
+}
